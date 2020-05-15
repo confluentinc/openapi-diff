@@ -12,6 +12,7 @@ public class BackwardCompatibilityTest {
   private final String OPENAPI_DOC3 = "backwardCompatibility/bc_3.yaml";
   private final String OPENAPI_DOC4 = "backwardCompatibility/bc_4.yaml";
   private final String OPENAPI_DOC5 = "backwardCompatibility/bc_5.yaml";
+  private final String OPENAPI_DOC6 = "backwardCompatibility/bc_6.yaml";
 
   @Test
   public void testNoChange() {
@@ -46,5 +47,10 @@ public class BackwardCompatibilityTest {
   @Test
   public void testApiReadWriteOnlyPropertiesChanged() {
     assertOpenApiBackwardCompatible(OPENAPI_DOC1, OPENAPI_DOC5, true);
+  }
+
+  @Test
+  public void testSchemDefaultChanged() {
+    assertOpenApiBackwardIncompatible(OPENAPI_DOC4, OPENAPI_DOC6);
   }
 }

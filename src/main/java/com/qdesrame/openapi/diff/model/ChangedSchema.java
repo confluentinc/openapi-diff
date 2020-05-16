@@ -39,6 +39,8 @@ public class ChangedSchema implements ComposedChanged {
   protected ChangedOneOfSchema oneOfSchema;
   protected ChangedSchema addProp;
   private ChangedExtensions extensions;
+  private boolean changeMaximum;
+  private boolean changeMinimum;
 
   public ChangedSchema() {
     increasedProperties = new LinkedHashMap<>();
@@ -73,7 +75,9 @@ public class ChangedSchema implements ComposedChanged {
         && missingProperties.size() == 0
         && changedProperties.values().size() == 0
         && !changeDeprecated
-        && !discriminatorPropertyChanged) {
+        && !discriminatorPropertyChanged
+        && !changeMinimum
+        && !changeMaximum) {
       return DiffResult.NO_CHANGES;
     }
     boolean compatibleForRequest = (oldSchema != null || newSchema == null);
@@ -82,7 +86,9 @@ public class ChangedSchema implements ComposedChanged {
     if ((context.isRequest() && compatibleForRequest
             || context.isResponse() && compatibleForResponse)
         && !changedType
-        && !discriminatorPropertyChanged) {
+        && !discriminatorPropertyChanged
+        && !changeMinimum
+        && !changeMaximum) {
       return DiffResult.COMPATIBLE;
     }
     return DiffResult.INCOMPATIBLE;

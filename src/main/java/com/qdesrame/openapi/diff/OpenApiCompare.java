@@ -11,7 +11,7 @@ import java.util.List;
 
 public class OpenApiCompare {
 
-  private static OpenAPIV3Parser openApiParser = new OpenAPIV3Parser();
+  public static OpenAPIV3Parser openApiParser = new OpenAPIV3Parser();
   private static ParseOptions options = new ParseOptions();
 
   static {

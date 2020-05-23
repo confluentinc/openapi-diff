@@ -51,17 +51,17 @@ public class BackwardCompatibilityTest {
   }
 
   @Test
-  public void testSchemDefaultChanged() {
+  public void testSchemaDefaultChanged() {
     assertOpenApiBackwardIncompatible(OPENAPI_DOC4, OPENAPI_DOC6);
   }
 
   @Test
-  public void testSchemDefaultRemoved() {
+  public void testSchemaDefaultRemoved() {
     assertOpenApiBackwardIncompatible(OPENAPI_DOC4, OPENAPI_DOC7);
   }
 
   @Test
-  public void testSchemDefaultAdded() {
+  public void testSchemaDefaultAdded() {
     assertOpenApiBackwardIncompatible(OPENAPI_DOC7, OPENAPI_DOC4);
   }
 }

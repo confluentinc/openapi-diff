@@ -119,5 +119,5 @@ public class OpenApiCompare {
   public static OpenAPIV3Parser getOpenApiParser() {
     return openApiParser;
   }
-
 }
+

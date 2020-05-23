@@ -118,3 +118,4 @@ public class BackwardCompatibilityTest {
             .setMinimum(new BigDecimal(minValue));
   }
 }
+

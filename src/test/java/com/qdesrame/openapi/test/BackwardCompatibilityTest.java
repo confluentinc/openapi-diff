@@ -39,12 +39,7 @@ public class BackwardCompatibilityTest {
   public void testApiChangedOperationMissing() {
     assertOpenApiBackwardIncompatible(OPENAPI_DOC3, OPENAPI_DOC2);
   }
-
-  @Test
-  public void testApiOperationChanged() {
-    assertOpenApiBackwardCompatible(OPENAPI_DOC2, OPENAPI_DOC4, true);
-  }
-
+  
   @Test
   public void testApiReadWriteOnlyPropertiesChanged() {
     assertOpenApiBackwardCompatible(OPENAPI_DOC1, OPENAPI_DOC5, true);

@@ -77,7 +77,8 @@ public class ChangedSchema implements ComposedChanged {
         && !changeDeprecated
         && !discriminatorPropertyChanged
         && !changeMinimum
-        && !changeMaximum) {
+        && !changeMaximum
+        && !changeDefault) {
       return DiffResult.NO_CHANGES;
     }
     boolean compatibleForRequest = (oldSchema != null || newSchema == null);
@@ -88,9 +89,11 @@ public class ChangedSchema implements ComposedChanged {
         && !changedType
         && !discriminatorPropertyChanged
         && !changeMinimum
-        && !changeMaximum) {
+        && !changeMaximum
+        && !changeDefault) {
       return DiffResult.COMPATIBLE;
     }
+
     return DiffResult.INCOMPATIBLE;
   }
 }

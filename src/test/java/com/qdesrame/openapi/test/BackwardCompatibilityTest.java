@@ -12,6 +12,8 @@ public class BackwardCompatibilityTest {
   private final String OPENAPI_DOC3 = "backwardCompatibility/bc_3.yaml";
   private final String OPENAPI_DOC4 = "backwardCompatibility/bc_4.yaml";
   private final String OPENAPI_DOC5 = "backwardCompatibility/bc_5.yaml";
+  private final String OPENAPI_DOC6 = "backwardCompatibility/bc_6.yaml";
+  private final String OPENAPI_DOC7 = "backwardCompatibility/bc_7.yaml";
 
   @Test
   public void testNoChange() {
@@ -37,14 +39,24 @@ public class BackwardCompatibilityTest {
   public void testApiChangedOperationMissing() {
     assertOpenApiBackwardIncompatible(OPENAPI_DOC3, OPENAPI_DOC2);
   }
-
-  @Test
-  public void testApiOperationChanged() {
-    assertOpenApiBackwardCompatible(OPENAPI_DOC2, OPENAPI_DOC4, true);
-  }
-
+  
   @Test
   public void testApiReadWriteOnlyPropertiesChanged() {
     assertOpenApiBackwardCompatible(OPENAPI_DOC1, OPENAPI_DOC5, true);
+  }
+
+  @Test
+  public void testSchemaDefaultChanged() {
+    assertOpenApiBackwardIncompatible(OPENAPI_DOC4, OPENAPI_DOC6);
+  }
+
+  @Test
+  public void testSchemaDefaultRemoved() {
+    assertOpenApiBackwardIncompatible(OPENAPI_DOC4, OPENAPI_DOC7);
+  }
+
+  @Test
+  public void testSchemaDefaultAdded() {
+    assertOpenApiBackwardIncompatible(OPENAPI_DOC7, OPENAPI_DOC4);
   }
 }

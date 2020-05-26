@@ -115,4 +115,9 @@ public class OpenApiCompare {
   private static OpenAPI readLocation(String location, List<AuthorizationValue> auths) {
     return openApiParser.read(location, auths, options);
   }
+
+  public static OpenAPIV3Parser getOpenApiParser() {
+    return openApiParser;
+  }
 }
+

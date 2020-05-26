@@ -54,7 +54,9 @@ public class SchemaDiffResult {
         .setChangeFormat(!Objects.equals(left.getFormat(), right.getFormat()))
         .setReadOnly(new ChangedReadOnly(left.getReadOnly(), right.getReadOnly(), context))
         .setWriteOnly(new ChangedWriteOnly(left.getWriteOnly(), right.getWriteOnly(), context))
-        .setMaxLength(new ChangedMaxLength(left.getMaxLength(), right.getMaxLength(), context));
+        .setMaxLength(new ChangedMaxLength(left.getMaxLength(), right.getMaxLength(), context))
+        .setChangeMinimum(!Objects.equals(left.getMinimum(), right.getMinimum()))
+        .setChangeMaximum(!Objects.equals(left.getMaximum(), right.getMaximum()));
 
     openApiDiff
         .getExtensionsDiff()

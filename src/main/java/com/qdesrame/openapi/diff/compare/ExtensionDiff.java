@@ -4,16 +4,16 @@ import com.qdesrame.openapi.diff.model.Change;
 import com.qdesrame.openapi.diff.model.Changed;
 import com.qdesrame.openapi.diff.model.DiffContext;
 
-public interface ExtensionDiff {
+public interface ExtensionDiff<T> {
 
-  ExtensionDiff setOpenApiDiff(OpenApiDiff openApiDiff);
+  ExtensionDiff<T> setOpenApiDiff(OpenApiDiff openApiDiff);
 
   String getName();
 
-  Changed diff(Change extension, DiffContext context);
+  Changed diff(Change<T> extension, DiffContext context);
 
   default boolean isParentApplicable(
-      Change.Type type, Object object, Object extension, DiffContext context) {
+      Change.Type type, T object, T extension, DiffContext context) {
     return true;
   }
 }

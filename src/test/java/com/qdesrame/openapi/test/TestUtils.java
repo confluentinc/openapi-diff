@@ -32,6 +32,15 @@ public class TestUtils {
     ChangedOpenApi changedOpenApi = OpenApiCompare.fromLocations(oldSpec, newSpec);
     LOG.info("Result: {}", changedOpenApi.isChanged().getValue());
     assertThat(changedOpenApi.isCompatible()).isTrue();
+    assertThat(changedOpenApi.isChanged().isUnchanged() != isDiff);
+  }
+
+  public static void assertOpenApiBackwardCompatible(
+          OpenAPI oldSpec, OpenAPI newSpec, boolean isDiff) {
+    ChangedOpenApi changedOpenApi = OpenApiCompare.fromSpecifications(oldSpec, newSpec);
+    LOG.info("Result: {}", changedOpenApi.isChanged().getValue());
+    assertThat(changedOpenApi.isCompatible()).isTrue();
+    assertThat(changedOpenApi.isChanged().isUnchanged() != isDiff);
   }
 
   public static void assertOpenApiBackwardIncompatible(String oldSpec, String newSpec) {

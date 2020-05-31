@@ -1,16 +1,20 @@
 package com.qdesrame.openapi.test;
 
+import com.qdesrame.openapi.diff.OpenApiCompare;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.headers.Header;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.qdesrame.openapi.test.TestUtils.assertOpenApiBackwardCompatible;
 import static com.qdesrame.openapi.test.TestUtils.assertOpenApiBackwardIncompatible;
 
-import com.qdesrame.openapi.diff.OpenApiCompare;
-import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.StringSchema;
-import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -113,6 +117,46 @@ public class BackwardCompatibilityTest {
   }
 
   @Test
+  public void testApiResponseDefaultAdded() {
+    OpenAPI spec = OpenApiCompare.getOpenApiParser().read(OPENAPI_DOC5);
+    OpenAPI specWithDefault = specWithDefaultResponse(OPENAPI_DOC5, new ApiResponse().description("hi"));
+    assertOpenApiBackwardCompatible(spec, specWithDefault, true);
+  }
+
+  @Test
+  public void testApiResponseDefaultRemoved() {
+    OpenAPI spec = OpenApiCompare.getOpenApiParser().read(OPENAPI_DOC5);
+    OpenAPI specWithDefault = specWithDefaultResponse(OPENAPI_DOC5, new ApiResponse().description("hi"));
+    assertOpenApiBackwardIncompatible(specWithDefault, spec);
+  }
+
+  @Test
+  public void testApiResponseDefaultChanged() {
+    Map<String, Header> headers = new HashMap<>();
+    headers.put("hi", new Header().description("hi"));
+    OpenAPI specWithDefault1 = specWithDefaultResponse(OPENAPI_DOC5, new ApiResponse().headers(headers));
+    OpenAPI specWithDefault2 = specWithDefaultResponse(OPENAPI_DOC5, new ApiResponse());
+    assertOpenApiBackwardIncompatible(specWithDefault1, specWithDefault2);
+  }
+
+  // Test to make sure changing description doesn't break compatibility.
+  @Test
+  public void testApiResponseDefaultDescriptionChanged() {
+    OpenAPI specWithDefault1 = specWithDefaultResponse(OPENAPI_DOC5, new ApiResponse().description("hi"));
+    OpenAPI specWithDefault2 = specWithDefaultResponse(OPENAPI_DOC5, new ApiResponse().description("hey"));
+    assertOpenApiBackwardCompatible(specWithDefault1, specWithDefault2, true);
+  }
+
+  private OpenAPI specWithDefaultResponse(String baseSpecPath, ApiResponse defaultResponse) {
+    OpenAPI specWithDefault = OpenApiCompare.getOpenApiParser().read(baseSpecPath);
+    specWithDefault.getPaths().get("/pet/findByStatus")
+            .getGet()
+            .getResponses()
+            .setDefault(defaultResponse);
+    return specWithDefault;
+  }
+
+  @Test
   public void testSchemaMinimumValueChanged() {
     OpenAPI spec = OpenApiCompare.getOpenApiParser().read(OPENAPI_DOC5);
     setMockMinimumValue(spec, 123);
@@ -161,7 +205,7 @@ public class BackwardCompatibilityTest {
   }
 
   private StringSchema getDogStatus(OpenAPI spec) {
-    return(StringSchema) spec.getComponents()
+    return (StringSchema) spec.getComponents()
             .getSchemas()
             .get("Dog")
             .getProperties()

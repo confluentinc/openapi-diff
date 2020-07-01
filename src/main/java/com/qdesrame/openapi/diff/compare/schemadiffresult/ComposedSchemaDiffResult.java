@@ -2,6 +2,7 @@ package com.qdesrame.openapi.diff.compare.schemadiffresult;
 
 import com.qdesrame.openapi.diff.compare.MapKeyDiff;
 import com.qdesrame.openapi.diff.compare.OpenApiDiff;
+import com.qdesrame.openapi.diff.compare.SchemaDiff;
 import com.qdesrame.openapi.diff.model.ChangedOneOfSchema;
 import com.qdesrame.openapi.diff.model.ChangedSchema;
 import com.qdesrame.openapi.diff.model.DiffContext;
@@ -11,14 +12,15 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Discriminator;
 import io.swagger.v3.oas.models.media.Schema;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+
+import java.util.*;
 import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 
-/** Created by adarsh.sharma on 20/12/17. */
+/**
+ * Created by adarsh.sharma on 20/12/17.
+ */
 public class ComposedSchemaDiffResult extends SchemaDiffResult {
   private static RefPointer<Schema> refPointer = new RefPointer<>(RefType.SCHEMAS);
 
@@ -42,50 +44,108 @@ public class ComposedSchemaDiffResult extends SchemaDiffResult {
 
         Discriminator leftDis = leftComposedSchema.getDiscriminator();
         Discriminator rightDis = rightComposedSchema.getDiscriminator();
-        if (leftDis == null
-            || rightDis == null
-            || leftDis.getPropertyName() == null
-            || rightDis.getPropertyName() == null) {
-          throw new IllegalArgumentException(
-              "discriminator or property not found for oneOf schema");
-        } else if (!leftDis.getPropertyName().equals(rightDis.getPropertyName())
-            || (CollectionUtils.isEmpty(leftComposedSchema.getOneOf())
-                || CollectionUtils.isEmpty(rightComposedSchema.getOneOf()))) {
+        if (leftDis != null && leftDis.getPropertyName() == null) {
+          throw new IllegalArgumentException("discriminator in old schema should have required property 'propertyName'");
+        }
+        if (rightDis != null && rightDis.getPropertyName() == null) {
+          throw new IllegalArgumentException("discriminator in new schema should have required property 'propertyName'");
+        }
+        if (leftDis == null && rightDis != null ||
+            leftDis != null && rightDis == null ||
+            leftDis != null && !Objects.equals(leftDis.getPropertyName(), rightDis.getPropertyName())) {
+          changedSchema.setDiscriminatorPropertyChanged(true);
           changedSchema.setOldSchema(left);
           changedSchema.setNewSchema(right);
-          changedSchema.setDiscriminatorPropertyChanged(true);
           changedSchema.setContext(context);
           return Optional.of(changedSchema);
         }
-
-        Map<String, String> leftMapping = getMapping(leftComposedSchema);
-        Map<String, String> rightMapping = getMapping(rightComposedSchema);
-
-        MapKeyDiff<String, Schema> mappingDiff =
-            MapKeyDiff.diff(
-                getSchema(leftComponents, leftMapping), getSchema(rightComponents, rightMapping));
-        Map<String, ChangedSchema> changedMapping = new LinkedHashMap<>();
-        for (String key : mappingDiff.getSharedKey()) {
-          Schema leftSchema = new Schema();
-          leftSchema.set$ref(leftMapping.get(key));
-          Schema rightSchema = new Schema();
-          rightSchema.set$ref(rightMapping.get(key));
-          Optional<ChangedSchema> changedSchema =
-              openApiDiff
-                  .getSchemaDiff()
-                  .diff(refSet, leftSchema, rightSchema, context.copyWithRequired(true));
-          changedSchema.ifPresent(schema -> changedMapping.put(key, schema));
+        ChangedOneOfSchema changedOneOfSchema;
+        if (leftDis == null & rightDis == null) {
+          changedOneOfSchema = compareOneOfWithNoDiscriminators(leftComponents, rightComponents,
+              leftComposedSchema, rightComposedSchema, refSet, context);
+        } else {
+          // Both discriminators are set.
+          changedOneOfSchema = compareOneOfWithDiscriminators(leftComponents, rightComponents,
+              leftComposedSchema, rightComposedSchema, refSet, context);
         }
-        changedSchema.setOneOfSchema(
-            new ChangedOneOfSchema(leftMapping, rightMapping, context)
-                .setIncreased(mappingDiff.getIncreased())
-                .setMissing(mappingDiff.getMissing())
-                .setChanged(changedMapping));
+        changedSchema.setOneOfSchema(changedOneOfSchema);
       }
       return super.diff(refSet, leftComponents, rightComponents, left, right, context);
     } else {
       return openApiDiff.getSchemaDiff().getTypeChangedSchema(left, right, context);
     }
+  }
+
+  // Compare oneOf schemas with no discriminators.
+  // TODO: Compare in an unordered way. The current comparison is ordered,
+  //  meaning that oldOneOf[0] is compared to newOneOf[0], oldOneOf[1] is compared to newOneOf[1],
+  //  and so on.
+  private ChangedOneOfSchema compareOneOfWithNoDiscriminators(
+      Components leftComponents,
+      Components rightComponents,
+      ComposedSchema leftComposedSchema,
+      ComposedSchema rightComposedSchema,
+      HashSet<String> refSet,
+      DiffContext context) {
+    Map<String, Schema> leftSchemas = getResolvedComposedSchemas(leftComponents, leftComposedSchema);
+    Map<String, Schema> rightSchemas = getResolvedComposedSchemas(rightComponents, rightComposedSchema);
+    MapKeyDiff<String, Schema> mapKeyDiff = MapKeyDiff.diff(leftSchemas, rightSchemas);
+    Map<String, ChangedSchema> changedSchemas = new LinkedHashMap<>();
+    for (String key : mapKeyDiff.getSharedKey()) {
+      Schema leftSchema = leftSchemas.get(key);
+      Schema rightSchema = rightSchemas.get(key);
+      Optional<ChangedSchema> changedSchema =
+          openApiDiff
+              .getSchemaDiff()
+              .diff(refSet, leftSchema, rightSchema, context.copyWithRequired(true));
+      changedSchema.ifPresent(schema -> changedSchemas.put(key, schema));
+    }
+    return new ChangedOneOfSchema(null, null, context)
+        .setIncreased(mapKeyDiff.getIncreased())
+        .setMissing(mapKeyDiff.getMissing())
+        .setChanged(changedSchemas);
+  }
+
+  private Map<String, Schema> getResolvedComposedSchemas(Components components, ComposedSchema composedSchema) {
+    Map<String, Schema> schemas = new LinkedHashMap<>();
+    for (int i = 0; i < composedSchema.getOneOf().size(); i++) {
+      Schema schema = composedSchema.getOneOf().get(i);
+      SchemaDiff.resolveComposedSchema(components, schema);
+      // Hacky key, but I guess it works?
+      schemas.put(String.valueOf(i), schema);
+    }
+    return schemas;
+  }
+
+  private ChangedOneOfSchema compareOneOfWithDiscriminators(
+      Components leftComponents,
+      Components rightComponents,
+      ComposedSchema leftComposedSchema,
+      ComposedSchema rightComposedSchema,
+      HashSet<String> refSet,
+      DiffContext context) {
+    Map<String, String> leftMapping = getMapping(leftComposedSchema);
+    Map<String, String> rightMapping = getMapping(rightComposedSchema);
+
+    MapKeyDiff<String, Schema> mappingDiff =
+        MapKeyDiff.diff(
+            getSchema(leftComponents, leftMapping), getSchema(rightComponents, rightMapping));
+    Map<String, ChangedSchema> changedMapping = new LinkedHashMap<>();
+    for (String key : mappingDiff.getSharedKey()) {
+      Schema leftSchema = new Schema();
+      leftSchema.set$ref(leftMapping.get(key));
+      Schema rightSchema = new Schema();
+      rightSchema.set$ref(rightMapping.get(key));
+      Optional<ChangedSchema> changedSchema =
+          openApiDiff
+              .getSchemaDiff()
+              .diff(refSet, leftSchema, rightSchema, context.copyWithRequired(true));
+      changedSchema.ifPresent(schema -> changedMapping.put(key, schema));
+    }
+    return new ChangedOneOfSchema(leftMapping, rightMapping, context)
+        .setIncreased(mappingDiff.getIncreased())
+        .setMissing(mappingDiff.getMissing())
+        .setChanged(changedMapping);
   }
 
   private Map<String, Schema> getSchema(Components components, Map<String, String> mapping) {

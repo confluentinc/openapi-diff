@@ -77,7 +77,7 @@ public class SchemaDiff extends ReferenceDiffCache<Schema, ChangedSchema> {
     }
   }
 
-  protected static Schema resolveComposedSchema(Components components, Schema schema) {
+  public static Schema resolveComposedSchema(Components components, Schema schema) {
     if (schema instanceof ComposedSchema) {
       ComposedSchema composedSchema = (ComposedSchema) schema;
       List<Schema> allOfSchemaList = composedSchema.getAllOf();

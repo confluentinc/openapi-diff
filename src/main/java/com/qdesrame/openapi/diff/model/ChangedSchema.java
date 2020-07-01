@@ -76,6 +76,7 @@ public class ChangedSchema implements ComposedChanged {
         && !discriminatorPropertyChanged) {
       return DiffResult.NO_CHANGES;
     }
+    // TODO: Detect added required properties and report broken compatibility.
     boolean compatibleForRequest = (oldSchema != null || newSchema == null);
     boolean compatibleForResponse =
         missingProperties.isEmpty() && (oldSchema == null || newSchema != null);

@@ -69,7 +69,7 @@ public class OneOfDiffTest {
   public void testOldOneOfWithDiscriminatorWithNoPropertyName() {
     OpenAPI oldSpec = OpenApiCompare.getOpenApiParser().read(OPENAPI_DOC2);
     OpenAPI newSpec = OpenApiCompare.getOpenApiParser().read(OPENAPI_DOC2);
-    Discriminator disc = newSpec.getComponents().getSchemas().get("Pet").getDiscriminator();
+    Discriminator disc = oldSpec.getComponents().getSchemas().get("Pet").getDiscriminator();
     disc.setPropertyName(null);
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       assertOpenApiBackwardIncompatible(oldSpec, newSpec);
@@ -80,7 +80,7 @@ public class OneOfDiffTest {
   public void testNewOneOfWithDiscriminatorWithNoPropertyName() {
     OpenAPI oldSpec = OpenApiCompare.getOpenApiParser().read(OPENAPI_DOC2);
     OpenAPI newSpec = OpenApiCompare.getOpenApiParser().read(OPENAPI_DOC2);
-    Discriminator disc = oldSpec.getComponents().getSchemas().get("Pet").getDiscriminator();
+    Discriminator disc = newSpec.getComponents().getSchemas().get("Pet").getDiscriminator();
     disc.setPropertyName(null);
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       assertOpenApiBackwardIncompatible(oldSpec, newSpec);
